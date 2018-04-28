@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Lite Player</string>
+    <string name="video">视频</string>
+    <string name="music">音乐</string>
+    <string name="delete">删除</string>
+    <string name="close">关闭</string>
+    <string name="file">文件</string>
+    <string name="media">媒体</string>
+    <string name="filename">文件名</string>
+    <string name="path">位置</string>
+    <string name="size">大小</string>
+    <string name="time">日期</string>
+    <string name="resolution">分辨率</string>
+    <string name="duration">时长</string>
+    <string name="title">标题</string>
+    <string name="artist">歌手</string>
+    <string name="album">专辑</string>
+    <string name="video_lose">视频不存在了</string>
+    <string name="music_lose">音乐不存在了</string>
+    <string name="permission_message">需要同意所有权限才可正常运行</string>
+    <string name="delete_success">删除成功</string>
+</resources>
