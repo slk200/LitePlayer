@@ -53,7 +53,6 @@ public class MusicPlayService extends Service {
         public void run() {
             if (mMediaPlayer.isPlaying()) {
                 Message message = Message.obtain();
-                ;
                 message.what = MSG_UPDATE;
                 message.arg1 = mMediaPlayer.getCurrentPosition();
                 sendMessageToActivity(message);
@@ -99,7 +98,6 @@ public class MusicPlayService extends Service {
         mActivityMessenger = msg.replyTo;
 
         Message message = Message.obtain();
-        ;
         message.what = MSG_BIND;
         message.arg1 = ResultCode.OK;
         sendMessageToActivity(message);
@@ -115,7 +113,6 @@ public class MusicPlayService extends Service {
         create(mCurrentMusicInfo);
 
         Message message = Message.obtain();
-        ;
         message.what = MSG_START;
         message.obj = mCurrentMusicInfo;
         message.arg1 = mMediaPlayer.getDuration();
@@ -155,7 +152,6 @@ public class MusicPlayService extends Service {
             mMessageHandler.post(updateTask);
         }
         Message message = Message.obtain();
-        ;
         message.what = MSG_PAUSE;
         message.obj = mMediaPlayer.isPlaying();
         sendMessageToActivity(message);
@@ -183,7 +179,6 @@ public class MusicPlayService extends Service {
             create(mCurrentMusicInfo);
 
             Message message = Message.obtain();
-            ;
             message.what = MSG_NEXT;
             message.obj = mCurrentMusicInfo;
             message.arg1 = mMediaPlayer.getDuration();
@@ -212,7 +207,6 @@ public class MusicPlayService extends Service {
      */
     private void stop() {
         Message message = Message.obtain();
-        ;
         message.what = MSG_STOP;
         sendMessageToActivity(message);
     }
