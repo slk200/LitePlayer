@@ -37,10 +37,11 @@ import org.tizzer.liteplayer.entity.MusicInfo;
 import org.tizzer.liteplayer.helper.ScanHelper;
 import org.tizzer.liteplayer.listener.OnSimpleSeekBarChangeListener;
 import org.tizzer.liteplayer.service.MusicPlayService;
-import org.tizzer.liteplayer.util.MediaUtil;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MusicFragment extends Fragment implements View.OnClickListener {
     private static final String TAG = "MusicFragment"; //日志
@@ -53,11 +54,13 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
     protected RelativeLayout mPlayBar;
     protected SeekBar mSeekBar;
     protected TextView mTitleView, mArtistAlbumView;
-    protected ImageView mAlbumView, mPlayView, mNextView;
+    protected ImageView mAlbumView, mPlayView, mNextView, mPreviousView;
     private MusicListAdapter mMusicListAdapter; //适配器
+    private List<MusicInfo> mMusicInfos = new ArrayList<>();
 
     private int currentPosition = -1; //当前播放位置
-    private boolean isFirstTime = true; //是否第一次加载
+    private int longClickPosition = -1; //当前查看位置
+    private long currentId = -1; //当前歌曲id
 
     /**
      * 服务
@@ -110,9 +113,10 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
         mArtistAlbumView = view.findViewById(R.id.tv_play_artist_album);
         mPlayView = view.findViewById(R.id.iv_music_play);
         mNextView = view.findViewById(R.id.iv_next);
+        mPreviousView = view.findViewById(R.id.iv_previous);
 
         //适配视频列表
-        mMusicListAdapter = new MusicListAdapter(getContext());
+        mMusicListAdapter = new MusicListAdapter(getContext(), mMusicInfos);
         mMusicList.setAdapter(mMusicListAdapter);
     }
 
@@ -130,14 +134,15 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
         mMusicList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (currentPosition != position) {
-                    currentPosition = position;
+                if (currentId != id) {
                     MusicInfo musicInfo = (MusicInfo) mMusicListAdapter.getItem(position);
                     if (new File(musicInfo.getPath()).exists()) {
+                        currentId = id;
+                        currentPosition = position;
                         start(musicInfo);
                     } else {
-                        Toast.makeText(getContext(), R.string.music_lose, Toast.LENGTH_SHORT).show();
                         deleteMusic(musicInfo);
+                        Toast.makeText(getContext(), R.string.music_lose, Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     pause();
@@ -148,6 +153,7 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
         mMusicList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                longClickPosition = position;
                 MusicInfo musicInfo = (MusicInfo) mMusicListAdapter.getItem(position);
                 MusicInfoDialogFragment.instance(musicInfo).show(getFragmentManager(), MusicInfoDialogFragment.MUSIC_INFO);
                 return true;
@@ -172,6 +178,7 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
 
         mPlayView.setOnClickListener(this);
         mNextView.setOnClickListener(this);
+        mPreviousView.setOnClickListener(this);
     }
 
     /**
@@ -190,6 +197,10 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
                 break;
             case R.id.iv_next:
                 next();
+                break;
+            case R.id.iv_previous:
+                previous();
+                break;
         }
     }
 
@@ -198,8 +209,18 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
      *
      * @param musicInfo
      */
-    public void deleteMusic(MusicInfo musicInfo) {
-        mMusicListAdapter.removeItem(musicInfo);
+    public boolean deleteMusic(MusicInfo musicInfo) {
+        Log.e(TAG, "deleteMusic: " + musicInfo.getId() + "  ?  " + currentId);
+        if (musicInfo.getId() != currentId) {
+            mMusicListAdapter.removeItem(musicInfo);
+            if (longClickPosition < currentPosition) {
+                currentPosition--;
+            }
+            Toast.makeText(getContext(), R.string.music_playing, Toast.LENGTH_SHORT).show();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -230,27 +251,15 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
      */
     private void scanMusic() {
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            File root = Environment.getExternalStorageDirectory();
-            ScanHelper.scanMediaFile(FileType.MUSIC, root, new ScanHelper.OnScanListener() {
-
+            ScanHelper.scanMediaFile(getContext().getContentResolver(), FileType.MUSIC, new ScanHelper.OnScanListener() {
                 @Override
-                public void onProcess(Object obj) {
-                    if (obj != null) {
-                        if (isFirstTime) {
-                            mMusicListAdapter.addItem((MusicInfo) obj);
-                        } else {
-                            mMusicListAdapter.addTempItem((MusicInfo) obj);
-                        }
+                public void onStop(List list) {
+                    Log.e(TAG, "scanMusic: " + list);
+                    if (!mMusicInfos.isEmpty()) {
+                        mMusicInfos.clear();
                     }
-                }
-
-                @Override
-                public void onStop() {
-                    if (!isFirstTime) {
-                        mMusicListAdapter.refresh();
-                    } else {
-                        isFirstTime = false;
-                    }
+                    mMusicInfos.addAll(list);
+                    mMusicListAdapter.notifyDataSetChanged();
                     mRefreshView.setRefreshing(false);
                 }
             });
@@ -306,17 +315,33 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
      * 下一首
      */
     private void next() {
-        MusicInfo musicInfo;
         if (currentPosition < mMusicListAdapter.getCount() - 1) {
             currentPosition++;
-            musicInfo = (MusicInfo) mMusicListAdapter.getItem(currentPosition);
         } else {
             currentPosition = 0;
-            musicInfo = (MusicInfo) mMusicListAdapter.getItem(currentPosition);
         }
+        switchSource();
+    }
 
+    /**
+     * 上一曲
+     */
+    private void previous() {
+        if ((currentPosition > 0)) {
+            currentPosition--;
+        } else {
+            currentPosition = mMusicListAdapter.getCount() - 1;
+        }
+        switchSource();
+    }
+
+    /**
+     * 切歌
+     */
+    private void switchSource() {
+        MusicInfo musicInfo = (MusicInfo) mMusicListAdapter.getItem(currentPosition);
         Message message = Message.obtain();
-        message.what = MusicPlayService.MSG_NEXT;
+        message.what = MusicPlayService.MSG_SWITCH;
         message.obj = musicInfo;
         sendMessageToService(message);
     }
@@ -347,8 +372,8 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
                 case MusicPlayService.MSG_SEEK:
                     Log.e(TAG, "sendMessageToService: 拖动出错" + e.getMessage());
                     break;
-                case MusicPlayService.MSG_NEXT:
-                    Log.e(TAG, "sendMessageToService: 切换出错" + e.getMessage());
+                case MusicPlayService.MSG_SWITCH:
+                    Log.e(TAG, "sendMessageToService: 切歌出错" + e.getMessage());
                     break;
             }
         }
@@ -382,8 +407,8 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
                 case MusicPlayService.MSG_PAUSE:
                     handlePause(msg);
                     break;
-                case MusicPlayService.MSG_NEXT:
-                    handleNext(msg);
+                case MusicPlayService.MSG_SWITCH:
+                    handleSwitch(msg);
                     break;
                 case MusicPlayService.MSG_STOP:
                     handleStop();
@@ -397,7 +422,7 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
          */
         private void handleBind(Message msg) {
             if (msg.arg1 == ResultCode.OK) {
-                Log.d(TAG, "handleMessage: 服务绑定成功");
+                Log.e(TAG, "handleMessage: 服务绑定成功");
             }
         }
 
@@ -412,12 +437,14 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
             mMusicFragment.mTitleView.setText(musicInfo.getTitle());
             mMusicFragment.mArtistAlbumView.setText(String.valueOf(musicInfo.getArtist() + " - " + musicInfo.getAlbum()));
             Glide.with(mMusicFragment.getContext())
-                    .load(MediaUtil.getAlbumArt(musicInfo.getPath()))
+                    .load(musicInfo.getAlbumArt())
+                    .asBitmap()
                     .placeholder(R.drawable.ic_album)
                     .into(mMusicFragment.mAlbumView);
             if (mMusicFragment.mPlayBar.getVisibility() == View.GONE) {
                 mMusicFragment.mPlayBar.setVisibility(View.VISIBLE);
-                mMusicFragment.mPlayBar.requestFocus();
+            } else {
+                mMusicFragment.mPlayView.setBackgroundResource(R.drawable.ic_pause_circle);
             }
         }
 
@@ -437,24 +464,25 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
          */
         private void handlePause(Message msg) {
             boolean flag = (boolean) msg.obj;
-            mMusicFragment.mPlayView.setBackground(
-                    flag ? mMusicFragment.getResources().getDrawable(R.drawable.ic_pause_circle) :
-                            mMusicFragment.getResources().getDrawable(R.drawable.ic_play_circle));
+            mMusicFragment.mPlayView.setBackgroundResource(
+                    flag ? R.drawable.ic_pause_circle :
+                            R.drawable.ic_play_circle);
         }
 
         /**
-         * 处理下一首消息
+         * 处理切歌消息
          *
          * @param msg
          */
-        private void handleNext(Message msg) {
+        private void handleSwitch(Message msg) {
             mMusicFragment.mSeekBar.setMax(msg.arg1);
             mMusicFragment.mPlayView.setBackground(mMusicFragment.getResources().getDrawable(R.drawable.ic_pause_circle));
             MusicInfo musicInfo = (MusicInfo) msg.obj;
             mMusicFragment.mTitleView.setText(musicInfo.getTitle());
             mMusicFragment.mArtistAlbumView.setText(String.valueOf(musicInfo.getArtist() + " - " + musicInfo.getAlbum()));
             Glide.with(mMusicFragment.getContext())
-                    .load(MediaUtil.getAlbumArt(musicInfo.getPath()))
+                    .load(musicInfo.getAlbumArt())
+                    .asBitmap()
                     .placeholder(R.drawable.ic_album)
                     .into(mMusicFragment.mAlbumView);
         }

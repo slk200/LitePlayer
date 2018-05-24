@@ -99,7 +99,7 @@ public class MusicInfoDialogFragment extends DialogFragment implements DialogInt
         titleView.setText(mMusicInfo.getTitle());
         artistView.setText(mMusicInfo.getArtist());
         albumView.setText(mMusicInfo.getAlbum());
-        durationView.setText(TimeUtil.mills2timescale(Integer.parseInt(mMusicInfo.getDuration()), false));
+        durationView.setText(mMusicInfo.getDuration());
     }
 
     /**
@@ -112,12 +112,14 @@ public class MusicInfoDialogFragment extends DialogFragment implements DialogInt
     public void onClick(DialogInterface dialog, int which) {
         switch (which) {
             case DialogInterface.BUTTON_NEUTRAL:
-                File file = new File(mMusicInfo.getPath());
-                if (file.exists()) {
-                    file.delete();
+                boolean result = deleteListener.onMusicDelete(mMusicInfo);
+                if (result) {
+                    File file = new File(mMusicInfo.getPath());
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                    Toast.makeText(getContext(), R.string.delete_success, Toast.LENGTH_SHORT).show();
                 }
-                Toast.makeText(getContext(), R.string.delete_success, Toast.LENGTH_SHORT).show();
-                deleteListener.onMusicDelete(mMusicInfo);
                 break;
             case DialogInterface.BUTTON_POSITIVE:
                 dismiss();

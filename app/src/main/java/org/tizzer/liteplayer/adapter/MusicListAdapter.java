@@ -10,49 +10,16 @@ import android.widget.TextView;
 
 import org.tizzer.liteplayer.R;
 import org.tizzer.liteplayer.entity.MusicInfo;
-import org.tizzer.liteplayer.util.TimeUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MusicListAdapter extends BaseAdapter {
     private List<MusicInfo> musicInfos; //音乐列表
-    private List<MusicInfo> tempList; //临时列表
     private Context context; //上下文环境
 
-    public MusicListAdapter(Context context) {
-        this.musicInfos = new ArrayList<>();
-        this.tempList = new ArrayList<>();
+    public MusicListAdapter(Context context, List<MusicInfo> musicInfos) {
+        this.musicInfos = musicInfos;
         this.context = context;
-    }
-
-    /**
-     * 增加元素
-     *
-     * @param musicInfo
-     */
-    public void addItem(MusicInfo musicInfo) {
-        musicInfos.add(musicInfo);
-        notifyDataSetChanged();
-    }
-
-    /**
-     * 增加临时元素
-     *
-     * @param musicInfo
-     */
-    public void addTempItem(MusicInfo musicInfo) {
-        tempList.add(musicInfo);
-    }
-
-    /**
-     * 刷新数据
-     */
-    public void refresh() {
-        musicInfos.clear();
-        musicInfos.addAll(tempList);
-        tempList.clear();
-        notifyDataSetChanged();
     }
 
     /**
@@ -77,7 +44,7 @@ public class MusicListAdapter extends BaseAdapter {
 
     @Override
     public long getItemId(int position) {
-        return position;
+        return musicInfos.get(position).getId();
     }
 
     @SuppressLint("InflateParams")
@@ -85,7 +52,7 @@ public class MusicListAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder viewHolder;
         if (convertView == null) {
-            convertView = LayoutInflater.from(context).inflate(R.layout.item_music_list, null);
+            convertView = LayoutInflater.from(context).inflate(R.layout.item_music_list, parent, false);
             viewHolder = new ViewHolder();
             viewHolder.mTitleView = convertView.findViewById(R.id.tv_music_title);
             viewHolder.mArtistAlbumView = convertView.findViewById(R.id.tv_artist_album);
@@ -97,7 +64,7 @@ public class MusicListAdapter extends BaseAdapter {
         MusicInfo musicInfo = musicInfos.get(position);
         viewHolder.mTitleView.setText(musicInfo.getTitle());
         viewHolder.mArtistAlbumView.setText(String.valueOf(musicInfo.getArtist() + " - " + musicInfo.getAlbum()));
-        viewHolder.mDurationView.setText(TimeUtil.mills2timescale(Integer.parseInt(musicInfo.getDuration()), false));
+        viewHolder.mDurationView.setText(musicInfo.getDuration());
         return convertView;
     }
 

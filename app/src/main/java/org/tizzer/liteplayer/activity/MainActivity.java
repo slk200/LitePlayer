@@ -25,7 +25,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements OnDeleteListener, OnMusicPauseListener {
-    public static final int REQUEST_CODE = 0; //权限请求码
+    private static final int REQUEST_CODE = 0; //权限请求码
 
     /**
      * 控件
@@ -112,8 +112,8 @@ public class MainActivity extends AppCompatActivity
      * @param musicInfo
      */
     @Override
-    public void onMusicDelete(MusicInfo musicInfo) {
-        mMusicFragment.deleteMusic(musicInfo);
+    public boolean onMusicDelete(MusicInfo musicInfo) {
+        return mMusicFragment.deleteMusic(musicInfo);
     }
 
     /**

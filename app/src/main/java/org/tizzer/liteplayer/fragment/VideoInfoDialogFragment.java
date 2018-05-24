@@ -94,8 +94,8 @@ public class VideoInfoDialogFragment extends DialogFragment implements DialogInt
         pathView.setText(mVideoInfo.getPath());
         sizeView.setText(String.valueOf(SpaceUtil.byte2space(file.length()) + "（" + file.length() + "字节）"));
         timeView.setText(TimeUtil.timestamp2datetime(file.lastModified()));
-        resolutionView.setText(String.valueOf(mVideoInfo.getWidth() + "×" + mVideoInfo.getHeight()));
-        durationView.setText(TimeUtil.mills2timescale(Integer.parseInt(mVideoInfo.getDuration()), false));
+        resolutionView.setText(mVideoInfo.getResolution());
+        durationView.setText(mVideoInfo.getDuration());
     }
 
     /**

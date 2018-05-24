@@ -1,13 +1,13 @@
 package org.tizzer.liteplayer.helper;
 
+import android.content.ContentResolver;
 import android.os.AsyncTask;
 
 import org.tizzer.liteplayer.constants.FileType;
-import org.tizzer.liteplayer.entity.MusicInfo;
 import org.tizzer.liteplayer.entity.VideoInfo;
-import org.tizzer.liteplayer.util.MediaUtil;
+import org.tizzer.liteplayer.util.MusicUtil;
+import org.tizzer.liteplayer.util.VideoUtil;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,12 +16,12 @@ public class ScanHelper {
     /**
      * 扫描媒体文件
      *
+     * @param contentResolver
      * @param fileType
-     * @param root
      * @param scanListener
      */
-    public static void scanMediaFile(FileType fileType, File root, OnScanListener scanListener) {
-        ScanTask scanTask = new ScanTask(fileType, root, scanListener);
+    public static void scanMediaFile(ContentResolver contentResolver, FileType fileType, OnScanListener scanListener) {
+        ScanTask scanTask = new ScanTask(contentResolver, fileType, scanListener);
         scanTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
@@ -29,60 +29,42 @@ public class ScanHelper {
      * 扫描监听器
      */
     public interface OnScanListener {
-
-        void onProcess(Object obj);
-
-        void onStop();
+        void onStop(List list);
     }
 
     /**
      * 扫描任务
      */
-    private static class ScanTask extends AsyncTask<Void, Object, Void> {
+    private static class ScanTask extends AsyncTask<Void, Void, List> {
 
+        private ContentResolver contentResolver;
         private FileType fileType;
-        private File root;
         private OnScanListener scanListener;
 
-        ScanTask(FileType fileType, File root, OnScanListener scanListener) {
+        ScanTask(ContentResolver contentResolver, FileType fileType, OnScanListener scanListener) {
+            this.contentResolver = contentResolver;
             this.fileType = fileType;
-            this.root = root;
             this.scanListener = scanListener;
         }
 
         @Override
-        protected Void doInBackground(Void... params) {
-            List<File> files = new ArrayList<>();
-            MediaUtil.scanMediaFile(files, root, fileType);
-            int size = files.size();
+        protected List doInBackground(Void... params) {
+            List list = new ArrayList();
             switch (fileType) {
                 case VIDEO:
-                    for (int i = 0; i < size; i++) {
-                        VideoInfo videoInfo = MediaUtil.getVideoInfo(files.get(i));
-                        publishProgress(videoInfo);
-                    }
+                    list = VideoUtil.getVideoData(contentResolver);
                     break;
                 case MUSIC:
-                    for (int i = 0; i < size; i++) {
-                        MusicInfo musicInfo = MediaUtil.getMusicInfo(files.get(i));
-                        publishProgress(musicInfo);
-                    }
+                    list = MusicUtil.getMusicData(contentResolver);
+                    break;
             }
-            return null;
+            return list;
         }
 
         @Override
-        protected void onProgressUpdate(Object... values) {
-            super.onProgressUpdate(values);
+        protected void onPostExecute(List list) {
             if (scanListener != null) {
-                scanListener.onProcess(values[0]);
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            if (scanListener != null) {
-                scanListener.onStop();
+                scanListener.onStop(list);
             }
         }
     }

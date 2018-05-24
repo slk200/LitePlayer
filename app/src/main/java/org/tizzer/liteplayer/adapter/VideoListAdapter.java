@@ -9,51 +9,20 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
 import org.tizzer.liteplayer.R;
 import org.tizzer.liteplayer.entity.VideoInfo;
-import org.tizzer.liteplayer.util.TimeUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class VideoListAdapter extends BaseAdapter {
     private List<VideoInfo> videoInfos; //视频列表
-    private List<VideoInfo> tempList; //临时列表
     private Context context; //上下文环境
 
-    public VideoListAdapter(Context context) {
-        this.videoInfos = new ArrayList<>();
-        this.tempList = new ArrayList<>();
+    public VideoListAdapter(Context context, List<VideoInfo> videoInfos) {
+        this.videoInfos = videoInfos;
         this.context = context;
-    }
-
-    /**
-     * 增加元素
-     *
-     * @param videoInfo
-     */
-    public void addItem(VideoInfo videoInfo) {
-        videoInfos.add(videoInfo);
-        notifyDataSetChanged();
-    }
-
-    /**
-     * 增加临时元素
-     *
-     * @param videoInfo
-     */
-    public void addTempItem(VideoInfo videoInfo) {
-        tempList.add(videoInfo);
-    }
-
-    /**
-     * 刷新数据
-     */
-    public void refresh() {
-        videoInfos.clear();
-        videoInfos.addAll(tempList);
-        tempList.clear();
-        notifyDataSetChanged();
     }
 
     /**
@@ -98,9 +67,12 @@ public class VideoListAdapter extends BaseAdapter {
         }
         VideoInfo videoInfo = videoInfos.get(position);
         viewHolder.mTitleView.setText(videoInfo.getTitle());
-        viewHolder.mResolutionView.setText(String.valueOf(videoInfo.getWidth() + "×" + videoInfo.getHeight()));
-        viewHolder.mDurationView.setText(TimeUtil.mills2timescale(Integer.parseInt(videoInfo.getDuration()), false));
-        viewHolder.mThumbView.setImageBitmap(videoInfo.getThumb());
+        viewHolder.mResolutionView.setText(videoInfo.getResolution());
+        viewHolder.mDurationView.setText(videoInfo.getDuration());
+        Glide.with(context)
+                .load(videoInfo.getThumb())
+                .placeholder(R.drawable.ic_launcher_background)
+                .into(viewHolder.mThumbView);
         return convertView;
     }
 

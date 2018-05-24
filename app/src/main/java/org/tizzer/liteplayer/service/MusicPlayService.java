@@ -26,10 +26,10 @@ public class MusicPlayService extends Service {
     public static final int MSG_START = 0x1003;
     public static final int MSG_PAUSE = 0x1004;
     public static final int MSG_SEEK = 0x1005;
-    public static final int MSG_NEXT = 0x1006;
+    public static final int MSG_SWITCH = 0x1006;
     public static final int MSG_STOP = 0x1007;
     public static final int MSG_REMOVE = 0x1008;
-    public static final int MSG_STATE = 0x1009;
+    public static final int MSG_STATE = 0x109;
 
     private static final String TAG = "MusicPlayService"; //日志
 
@@ -168,22 +168,19 @@ public class MusicPlayService extends Service {
     }
 
     /**
-     * 下一首
+     * 切歌
      *
      * @param msg
      */
-    private void handleNext(Message msg) {
-        MusicInfo musicInfo = (MusicInfo) msg.obj;
-        if (!musicInfo.equals(mCurrentMusicInfo)) {
-            mCurrentMusicInfo = musicInfo;
-            create(mCurrentMusicInfo);
+    private void handleSwitch(Message msg) {
+        mCurrentMusicInfo = (MusicInfo) msg.obj;
+        create(mCurrentMusicInfo);
 
-            Message message = Message.obtain();
-            message.what = MSG_NEXT;
-            message.obj = mCurrentMusicInfo;
-            message.arg1 = mMediaPlayer.getDuration();
-            sendMessageToActivity(message);
-        }
+        Message message = Message.obtain();
+        message.what = MSG_SWITCH;
+        message.obj = mCurrentMusicInfo;
+        message.arg1 = mMediaPlayer.getDuration();
+        sendMessageToActivity(message);
     }
 
     /**
@@ -197,7 +194,7 @@ public class MusicPlayService extends Service {
      * 暂停播放并更新状态
      */
     private void handleState() {
-        if (mMediaPlayer.isPlaying()) {
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
             handlePause();
         }
     }
@@ -236,8 +233,8 @@ public class MusicPlayService extends Service {
                 case MSG_SEEK:
                     Log.e(TAG, "sendMessageToActivity: 拖动出错" + e.getMessage());
                     break;
-                case MSG_NEXT:
-                    Log.e(TAG, "sendMessageToActivity: 切换出错" + e.getMessage());
+                case MSG_SWITCH:
+                    Log.e(TAG, "sendMessageToActivity: 切歌出错" + e.getMessage());
                     break;
                 case MSG_STOP:
                     Log.e(TAG, "sendMessageToActivity: 停止出错" + e.getMessage());
@@ -275,8 +272,8 @@ public class MusicPlayService extends Service {
                 case MSG_SEEK:
                     mMusicPlayService.handleSeek(msg);
                     break;
-                case MSG_NEXT:
-                    mMusicPlayService.handleNext(msg);
+                case MSG_SWITCH:
+                    mMusicPlayService.handleSwitch(msg);
                     break;
                 case MSG_REMOVE:
                     mMusicPlayService.removeUpdate();

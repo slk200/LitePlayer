@@ -9,5 +9,5 @@ import org.tizzer.liteplayer.entity.VideoInfo;
 public interface OnDeleteListener {
     void onVideoDelete(VideoInfo videoInfo);
 
-    void onMusicDelete(MusicInfo musicInfo);
+    boolean onMusicDelete(MusicInfo musicInfo);
 }

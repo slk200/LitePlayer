@@ -26,6 +26,8 @@ import org.tizzer.liteplayer.helper.ScanHelper;
 import org.tizzer.liteplayer.listener.OnMusicPauseListener;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VideoFragment extends Fragment {
     public static final String VIDEO_PATH = "video_path"; //intent视频路径标记
@@ -43,6 +45,7 @@ public class VideoFragment extends Fragment {
     private OnMusicPauseListener pauseListener; //暂停音乐播放回调
 
     private boolean isFirstTime = true; //是否第一次加载视频
+    private ArrayList<VideoInfo> mVideoInfos;
 
     @SuppressLint("InflateParams")
     @Nullable
@@ -66,7 +69,8 @@ public class VideoFragment extends Fragment {
         mExitButton = view.findViewById(R.id.fab_exit);
 
         //适配视频列表
-        mVideoListAdapter = new VideoListAdapter(getContext());
+        mVideoInfos = new ArrayList<>();
+        mVideoListAdapter = new VideoListAdapter(getContext(), mVideoInfos);
         mVideoList.setAdapter(mVideoListAdapter);
     }
 
@@ -152,28 +156,15 @@ public class VideoFragment extends Fragment {
      */
     private void scanVideo() {
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            File root = Environment.getExternalStorageDirectory();
-            ScanHelper.scanMediaFile(FileType.VIDEO, root, new ScanHelper.OnScanListener() {
-
+            ScanHelper.scanMediaFile(getContext().getContentResolver(), FileType.VIDEO, new ScanHelper.OnScanListener() {
                 @Override
-                public void onProcess(Object obj) {
-                    if (obj != null) {
-                        if (isFirstTime) {
-                            mVideoListAdapter.addItem((VideoInfo) obj);
-                        } else {
-                            Log.e(TAG, "onProcess: ");
-                            mVideoListAdapter.addTempItem((VideoInfo) obj);
-                        }
+                public void onStop(List list) {
+                    Log.e(TAG, "scanMusic: " + list);
+                    if (!mVideoInfos.isEmpty()) {
+                        mVideoInfos.clear();
                     }
-                }
-
-                @Override
-                public void onStop() {
-                    if (!isFirstTime) {
-                        mVideoListAdapter.refresh();
-                    } else {
-                        isFirstTime = false;
-                    }
+                    mVideoInfos.addAll(list);
+                    mVideoListAdapter.notifyDataSetChanged();
                     mRefreshView.setRefreshing(false);
                 }
             });

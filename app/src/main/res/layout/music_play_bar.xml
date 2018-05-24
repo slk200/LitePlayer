@@ -18,13 +18,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/seek"
-        android:padding="10dp">
+        android:padding="5dp">
 
         <ImageView
             android:id="@+id/iv_album"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:scaleType="centerCrop"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_album" />
 
         <ImageView
@@ -43,9 +43,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:layout_marginEnd="15dp"
+            android:layout_marginEnd="10dp"
             android:layout_toStartOf="@id/iv_next"
             android:background="@drawable/ic_pause_circle"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
+            android:id="@+id/iv_previous"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="10dp"
+            android:layout_toStartOf="@id/iv_music_play"
+            android:background="@drawable/ic_previous"
             android:clickable="true"
             android:focusable="true" />
 
@@ -57,13 +68,14 @@
             android:layout_marginStart="10dp"
             android:layout_marginTop="5dp"
             android:layout_toEndOf="@id/iv_album"
-            android:layout_toStartOf="@id/iv_music_play"
+            android:layout_toStartOf="@id/iv_previous"
             android:ellipsize="marquee"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:marqueeRepeatLimit="marquee_forever"
             android:singleLine="true"
-            android:text="test" />
+            android:text="test"
+            android:textColor="@color/colorBlack" />
 
         <TextView
             android:id="@+id/tv_play_artist_album"
@@ -73,10 +85,11 @@
             android:layout_marginBottom="5dp"
             android:layout_marginStart="10dp"
             android:layout_toEndOf="@id/iv_album"
-            android:layout_toStartOf="@id/iv_music_play"
+            android:layout_toStartOf="@id/iv_previous"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="test" />
+            android:text="test"
+            android:textSize="12sp" />
 
     </RelativeLayout>
 
