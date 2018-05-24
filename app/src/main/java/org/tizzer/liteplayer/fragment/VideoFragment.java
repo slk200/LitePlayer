@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VideoFragment extends Fragment {
-    public static final String VIDEO_PATH = "video_path"; //intent视频路径标记
-
+    public static final String VIDEO_LIST = "video_list"; //intent视频路径标记
+    public static final String CURRENT_POSITION = "current_position";
     private static final String TAG = "VideoFragment"; //日志
 
     /**
@@ -44,8 +44,7 @@ public class VideoFragment extends Fragment {
 
     private OnMusicPauseListener pauseListener; //暂停音乐播放回调
 
-    private boolean isFirstTime = true; //是否第一次加载视频
-    private ArrayList<VideoInfo> mVideoInfos;
+    private ArrayList<VideoInfo> mVideoInfos = new ArrayList<>();
 
     @SuppressLint("InflateParams")
     @Nullable
@@ -69,7 +68,6 @@ public class VideoFragment extends Fragment {
         mExitButton = view.findViewById(R.id.fab_exit);
 
         //适配视频列表
-        mVideoInfos = new ArrayList<>();
         mVideoListAdapter = new VideoListAdapter(getContext(), mVideoInfos);
         mVideoList.setAdapter(mVideoListAdapter);
     }
@@ -88,16 +86,21 @@ public class VideoFragment extends Fragment {
         mVideoList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                VideoInfo videoInfo = (VideoInfo) mVideoListAdapter.getItem(position);
-                if (new File(videoInfo.getPath()).exists()) {
+                VideoInfo currentVideoInfo = (VideoInfo) mVideoListAdapter.getItem(position);
+                if (new File(currentVideoInfo.getPath()).exists()) {
                     Intent intent = new Intent();
                     intent.setClass(getContext(), VideoPlayActivity.class);
-                    intent.putExtra(VIDEO_PATH, videoInfo.getPath());
+                    ArrayList<String> videoPathList = new ArrayList<>();
+                    for (VideoInfo videoInfo : mVideoInfos) {
+                        videoPathList.add(videoInfo.getPath());
+                    }
+                    intent.putStringArrayListExtra(VIDEO_LIST, videoPathList);
+                    intent.putExtra(CURRENT_POSITION, position);
                     getActivity().startActivity(intent);
                     pauseListener.onMusicPause();
                 } else {
+                    deleteVideo(currentVideoInfo);
                     Toast.makeText(getContext(), R.string.video_lose, Toast.LENGTH_SHORT).show();
-                    deleteVideo(videoInfo);
                 }
             }
         });

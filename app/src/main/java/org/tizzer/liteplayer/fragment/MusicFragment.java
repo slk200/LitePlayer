@@ -439,7 +439,7 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
             Glide.with(mMusicFragment.getContext())
                     .load(musicInfo.getAlbumArt())
                     .asBitmap()
-                    .placeholder(R.drawable.ic_album)
+                    .placeholder(R.drawable.ic_album_placeholder)
                     .into(mMusicFragment.mAlbumView);
             if (mMusicFragment.mPlayBar.getVisibility() == View.GONE) {
                 mMusicFragment.mPlayBar.setVisibility(View.VISIBLE);
@@ -464,9 +464,7 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
          */
         private void handlePause(Message msg) {
             boolean flag = (boolean) msg.obj;
-            mMusicFragment.mPlayView.setBackgroundResource(
-                    flag ? R.drawable.ic_pause_circle :
-                            R.drawable.ic_play_circle);
+            mMusicFragment.mPlayView.setBackgroundResource(flag ? R.drawable.ic_pause_circle : R.drawable.ic_play_circle);
         }
 
         /**
@@ -476,14 +474,14 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
          */
         private void handleSwitch(Message msg) {
             mMusicFragment.mSeekBar.setMax(msg.arg1);
-            mMusicFragment.mPlayView.setBackground(mMusicFragment.getResources().getDrawable(R.drawable.ic_pause_circle));
+            mMusicFragment.mPlayView.setBackgroundResource(R.drawable.ic_pause_circle);
             MusicInfo musicInfo = (MusicInfo) msg.obj;
             mMusicFragment.mTitleView.setText(musicInfo.getTitle());
             mMusicFragment.mArtistAlbumView.setText(String.valueOf(musicInfo.getArtist() + " - " + musicInfo.getAlbum()));
             Glide.with(mMusicFragment.getContext())
                     .load(musicInfo.getAlbumArt())
                     .asBitmap()
-                    .placeholder(R.drawable.ic_album)
+                    .placeholder(R.drawable.ic_album_placeholder)
                     .into(mMusicFragment.mAlbumView);
         }
 

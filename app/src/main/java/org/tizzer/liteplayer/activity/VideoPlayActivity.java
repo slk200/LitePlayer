@@ -11,6 +11,7 @@ import android.os.Message;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,6 +19,7 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.VideoView;
@@ -31,19 +33,27 @@ import org.tizzer.liteplayer.util.TimeUtil;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class VideoPlayActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final String TAG = "VideoPlayActivity"; //日志
     private static final int MSG_UPDATE = 0x2001; //更新消息标识
-    private static final int criticalValue = 100; //手势操作临界值
+    private static final int CRITICAL_VALUE = 100; //手势操作临界值
+    private static final int UPDATE_MILLIS = 500;
+    private static final int FLAG_REWIND = 0;
+    private static final int FLAG_FORWARD = 1;
 
-    protected ImageView mBackView, mPlayView, mOrientationView, mTypeView;
+    protected ImageView mBackView, mPlayView, mOrientationView, mTypeView, mPreviousView, mNextView, mRewindView, mForwardView;
     protected TextView mTitleView, mCurrentPositionView, mTotalPositionView, mProgressView;
-    protected LinearLayout mTipLayout, mTopLayout, mBottomLayout;
+    protected LinearLayout mTipLayout, mBottomLayout;
+    protected RelativeLayout mTopLayout;
     protected VideoView mVideoView;
     protected ProgressBar mProgressBar;
     protected SeekBar mSeekBar;
 
+    private ArrayList<String> mVideoPathList;
+    private int currentIndex = -1;
     private boolean isLongTime = false; //是否是长时间
     private boolean isFullScreen = false; //是否全屏
     private int position; //视频播放位置
@@ -60,7 +70,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
     private float lastY = 0; //记录上一次手处的Y位置
 
     private AudioManager mAudioManager; //音频管理器
-    private GestureDetector mGestureDetector;
+    private GestureDetector mGestureDetector; //手势监测
 
     private VideoPlayHandler mVideoPlayHandler = new VideoPlayHandler(this);
     private Runnable updateProgressTask = new Runnable() {
@@ -72,7 +82,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
                 message.arg1 = mVideoView.getCurrentPosition();
                 mVideoPlayHandler.sendMessage(message);
             }
-            mVideoPlayHandler.postDelayed(this, 500);
+            mVideoPlayHandler.postDelayed(this, UPDATE_MILLIS);
         }
     };
     private Runnable hideOperationTask = new Runnable() {
@@ -124,7 +134,8 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
             currentVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         }
         //获取屏幕亮度
-        currentBrightness = getBrightness() / 255;
+        currentBrightness = getBrightness();
+        Log.e(TAG, "initParams: " + currentBrightness);
         //初始化手势监听器
         mGestureDetector = new GestureDetector(getApplicationContext(), new MyGestureListener());
         //设置状态栏为黑色
@@ -137,7 +148,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
     private void initView() {
         mBackView = findViewById(R.id.iv_back);
         mPlayView = findViewById(R.id.iv_video_play);
-        mOrientationView = findViewById(R.id.tv_orientation);
+        mOrientationView = findViewById(R.id.iv_orientation);
         mTitleView = findViewById(R.id.tv_video_title);
         mCurrentPositionView = findViewById(R.id.tv_currentPosition);
         mTotalPositionView = findViewById(R.id.tv_totalPosition);
@@ -149,6 +160,10 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         mTypeView = findViewById(R.id.iv_type);
         mProgressBar = findViewById(R.id.pb_gress);
         mProgressView = findViewById(R.id.tv_progress);
+        mPreviousView = findViewById(R.id.iv_video_previous);
+        mNextView = findViewById(R.id.id_video_next);
+        mRewindView = findViewById(R.id.iv_video_rewind);
+        mForwardView = findViewById(R.id.ic_video_forward);
     }
 
     /**
@@ -156,8 +171,9 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
      */
     private void initData() {
         Intent intent = getIntent();
-        String path = intent.getStringExtra(VideoFragment.VIDEO_PATH);
-        createVideo(path);
+        mVideoPathList = intent.getStringArrayListExtra(VideoFragment.VIDEO_LIST);
+        currentIndex = intent.getIntExtra(VideoFragment.CURRENT_POSITION, 0);
+        createVideo(mVideoPathList.get(currentIndex));
     }
 
     /**
@@ -208,8 +224,28 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         });
 
         mBackView.setOnClickListener(this);
-        mPlayView.setOnClickListener(this);
         mOrientationView.setOnClickListener(this);
+        mPlayView.setOnClickListener(this);
+        mPreviousView.setOnClickListener(this);
+        mNextView.setOnClickListener(this);
+        mRewindView.setOnClickListener(this);
+        mForwardView.setOnClickListener(this);
+
+        mRewindView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Log.e(TAG, "onLongClick: mRewindView");
+                return false;
+            }
+        });
+
+        mForwardView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Log.e(TAG, "onLongClick: mForwardView");
+                return false;
+            }
+        });
     }
 
     @Override
@@ -218,12 +254,61 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
             case R.id.iv_back:
                 finish();
                 break;
+            case R.id.iv_orientation:
+                changeOrientation();
+                break;
+            case R.id.iv_video_previous:
+                if (currentIndex > 0) {
+                    currentIndex--;
+                } else {
+                    currentIndex = mVideoPathList.size() - 1;
+                }
+                createVideo(mVideoPathList.get(currentIndex));
+                break;
+            case R.id.iv_video_rewind:
+                rewindOrForward(FLAG_REWIND);
+                break;
             case R.id.iv_video_play:
                 togglePlay();
                 break;
-            case R.id.tv_orientation:
-                changeOrientation();
+            case R.id.ic_video_forward:
+                rewindOrForward(FLAG_FORWARD);
+                break;
+            case R.id.id_video_next:
+                if (currentIndex < mVideoPathList.size() - 1) {
+                    currentIndex++;
+                } else {
+                    currentIndex = 0;
+                }
+                createVideo(mVideoPathList.get(currentIndex));
+                break;
         }
+    }
+
+    /**
+     * 快退/快进
+     */
+    private void rewindOrForward(int flag) {
+        if (mVideoView.isPlaying()) {
+            mVideoView.pause();
+        }
+        mVideoPlayHandler.removeCallbacks(updateProgressTask);
+        mVideoPlayHandler.removeCallbacks(hideOperationTask);
+        int progress = 0;
+        switch (flag) {
+            case FLAG_REWIND:
+                progress = mVideoView.getCurrentPosition() - 5000;
+                break;
+            case FLAG_FORWARD:
+                progress = mVideoView.getCurrentPosition() + 5000;
+                break;
+        }
+
+        mVideoView.seekTo(progress);
+        mCurrentPositionView.setText(TimeUtil.mills2timescale(progress, isLongTime));
+        mVideoView.start();
+        mVideoPlayHandler.post(updateProgressTask);
+        mVideoPlayHandler.postDelayed(hideOperationTask, 3000);
     }
 
     /**
@@ -249,12 +334,12 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
                 float movedY = y - lastY; //滑动的Y距离
                 float absMovedX = Math.abs(movedX); //对距离取绝对值
                 float absMovedY = Math.abs(movedY); //对距离取绝对值
-                if (absMovedX < criticalValue && absMovedY < criticalValue) {
+                if (absMovedX < CRITICAL_VALUE && absMovedY < CRITICAL_VALUE) {
                     break;
                 }
-                if (absMovedX < criticalValue && absMovedY > criticalValue) {
+                if (absMovedX < CRITICAL_VALUE && absMovedY > CRITICAL_VALUE) {
                     isProgress = false;
-                } else if (absMovedX > criticalValue && absMovedY < criticalValue) {
+                } else if (absMovedX > CRITICAL_VALUE && absMovedY < CRITICAL_VALUE) {
                     isProgress = true;
                 }
                 if (!isProgress) {
@@ -280,6 +365,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
                     currentBrightness = getWindow().getAttributes().screenBrightness;
                 }
                 mTipLayout.setVisibility(View.GONE);
+                break;
         }
         return super.onTouchEvent(event);
     }
@@ -297,10 +383,10 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         currentPosition = currentPosition == -1 ? mVideoView.getCurrentPosition() : currentPosition;
         int progress = (int) (movedX * 120 / screen_width);
         if (progress > 0) {
-            mTypeView.setImageDrawable(getResources().getDrawable(R.drawable.ic_speed));
+            mTypeView.setImageDrawable(getResources().getDrawable(R.drawable.ic_forward));
             mProgressView.setText(String.valueOf("+" + progress + "s"));
         } else {
-            mTypeView.setImageDrawable(getResources().getDrawable(R.drawable.ic_rew));
+            mTypeView.setImageDrawable(getResources().getDrawable(R.drawable.ic_rewind));
             mProgressView.setText(String.valueOf(progress + "s"));
         }
         mProgressView.setVisibility(View.VISIBLE);
@@ -372,7 +458,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         mVideoView.seekTo(position);
         if (isPlaying) {
             mVideoView.start();
-            mPlayView.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause));
+            mPlayView.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_video));
             mVideoPlayHandler.post(updateProgressTask);
         }
     }
@@ -384,7 +470,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         if (isPlaying) {
             mVideoView.pause();
             mVideoPlayHandler.removeCallbacks(updateProgressTask);
-            mPlayView.setImageDrawable(getResources().getDrawable(R.drawable.ic_play));
+            mPlayView.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_video));
         }
         position = mVideoView.getCurrentPosition();
     }
@@ -400,11 +486,9 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             swapWithHeight();
             isFullScreen = true;
-            mOrientationView.setImageDrawable(getResources().getDrawable(R.drawable.ic_portrait));
         } else {
             swapWithHeight();
             isFullScreen = false;
-            mOrientationView.setImageDrawable(getResources().getDrawable(R.drawable.ic_landscape));
         }
     }
 
@@ -461,11 +545,11 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         if (mVideoView.isPlaying()) {
             mVideoView.pause();
             mVideoPlayHandler.removeCallbacks(updateProgressTask);
-            mPlayView.setImageDrawable(getResources().getDrawable(R.drawable.ic_play));
+            mPlayView.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_video));
             isPlaying = false;
         } else {
             mVideoView.start();
-            mPlayView.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause));
+            mPlayView.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_video));
             mVideoPlayHandler.post(updateProgressTask);
             isPlaying = true;
         }

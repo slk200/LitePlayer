@@ -4,7 +4,6 @@ import android.content.ContentResolver;
 import android.os.AsyncTask;
 
 import org.tizzer.liteplayer.constants.FileType;
-import org.tizzer.liteplayer.entity.VideoInfo;
 import org.tizzer.liteplayer.util.MusicUtil;
 import org.tizzer.liteplayer.util.VideoUtil;
 

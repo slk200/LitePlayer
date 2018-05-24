@@ -71,7 +71,7 @@ public class VideoListAdapter extends BaseAdapter {
         viewHolder.mDurationView.setText(videoInfo.getDuration());
         Glide.with(context)
                 .load(videoInfo.getThumb())
-                .placeholder(R.drawable.ic_launcher_background)
+                .placeholder(R.drawable.ic_video_placeholder)
                 .into(viewHolder.mThumbView);
         return convertView;
     }

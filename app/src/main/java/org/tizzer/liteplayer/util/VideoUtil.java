@@ -3,7 +3,6 @@ package org.tizzer.liteplayer.util;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import org.tizzer.liteplayer.entity.VideoInfo;
 

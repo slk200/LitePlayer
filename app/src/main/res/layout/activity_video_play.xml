@@ -36,7 +36,7 @@
             android:layout_height="5dp"
             android:layout_marginTop="10dp"
             android:max="100"
-            android:progressDrawable="@drawable/progress_style" />
+            android:progressDrawable="@drawable/progress_style_layer" />
 
         <TextView
             android:id="@+id/tv_progress"
@@ -49,33 +49,55 @@
     </LinearLayout>
 
     <!--顶部操作栏-->
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/ll_top"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorControllerBg"
-        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/iv_back"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:src="@drawable/ic_arrow_left" />
+            android:layout_centerVertical="true"
+            android:paddingBottom="5dp"
+            android:paddingEnd="10dp"
+            android:paddingStart="15dp"
+            android:paddingTop="5dp"
+            android:src="@drawable/ic_arrow_back" />
+
+        <ImageView
+            android:id="@+id/iv_orientation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/iv_back"
+            android:layout_alignParentEnd="true"
+            android:layout_alignTop="@id/iv_back"
+            android:layout_centerVertical="true"
+            android:paddingEnd="15dp"
+            android:paddingStart="15dp"
+            android:src="@drawable/ic_screen_rotation" />
 
         <TextView
             android:id="@+id/tv_video_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/iv_back"
+            android:layout_alignTop="@id/iv_back"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/iv_back"
+            android:layout_toStartOf="@id/iv_orientation"
             android:ellipsize="end"
+            android:gravity="center_vertical"
             android:maxLines="1"
-            android:padding="5dp"
+            android:paddingEnd="5dp"
+            android:paddingStart="5dp"
             android:text="test"
             android:textColor="@color/colorWhite"
             android:textSize="20sp" />
 
-    </LinearLayout>
+    </RelativeLayout>
 
     <!--底部操作栏-->
     <LinearLayout
@@ -84,47 +106,97 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:background="@color/colorControllerBg"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="5dp">
+        android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/iv_video_play"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:src="@drawable/ic_pause" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tv_currentPosition"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:text="00:00"
-            android:textColor="@color/colorWhite" />
+            <TextView
+                android:id="@+id/tv_currentPosition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dp"
+                android:text="00:00"
+                android:textColor="@color/colorWhite" />
 
-        <SeekBar
-            android:id="@+id/seek"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:maxHeight="2dp"
-            android:progressDrawable="@drawable/seek_progress_style" />
+            <SeekBar
+                android:id="@+id/seek"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxHeight="2dp"
+                android:progressDrawable="@drawable/seek_style_layer" />
 
-        <TextView
-            android:id="@+id/tv_totalPosition"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:text="20:20"
-            android:textColor="@color/colorWhite" />
+            <TextView
+                android:id="@+id/tv_totalPosition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dp"
+                android:text="20:20"
+                android:textColor="@color/colorWhite" />
 
-        <ImageView
-            android:id="@+id/tv_orientation"
-            android:layout_width="wrap_content"
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:src="@drawable/ic_landscape" />
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/iv_video_previous"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/media_controller_selector"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:src="@drawable/ic_skip_previous" />
+
+            <ImageView
+                android:id="@+id/iv_video_rewind"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/media_controller_selector"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:src="@drawable/ic_fast_rewind" />
+
+            <ImageView
+                android:id="@+id/iv_video_play"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/media_controller_selector"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:src="@drawable/ic_pause_video" />
+
+            <ImageView
+                android:id="@+id/ic_video_forward"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/media_controller_selector"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:src="@drawable/ic_fast_forward" />
+
+            <ImageView
+                android:id="@+id/id_video_next"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/media_controller_selector"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:src="@drawable/ic_skip_next" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
