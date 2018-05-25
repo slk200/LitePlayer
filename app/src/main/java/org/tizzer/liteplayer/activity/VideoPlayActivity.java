@@ -1,5 +1,6 @@
 package org.tizzer.liteplayer.activity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -35,14 +36,21 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class VideoPlayActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "VideoPlayActivity"; //日志
     private static final int MSG_UPDATE = 0x2001; //更新消息标识
     private static final int CRITICAL_VALUE = 100; //手势操作临界值
-    private static final int UPDATE_MILLIS = 500;
-    private static final int FLAG_REWIND = 0;
-    private static final int FLAG_FORWARD = 1;
+    private static final int UPDATE_DELAY = 500; //更新状态的间隔
+    public static final int REWIND_FORWARD_PROGRESS = 5000; //快退进跨度
+    public static final int LONG_TIME_MAX = 3599999; //(59m 59s 999ms)
+    private static final int REWIND_FORWARD_DELAY = 200; //快退进延迟
+    private static final int HIDE_DELAY = 3000; //隐藏间隔
+    private static final int FLAG_REWIND = 0; //快退操作
+    private static final int FLAG_FORWARD = 1; //快进操作
 
     protected ImageView mBackView, mPlayView, mOrientationView, mTypeView, mPreviousView, mNextView, mRewindView, mForwardView;
     protected TextView mTitleView, mCurrentPositionView, mTotalPositionView, mProgressView;
@@ -52,8 +60,9 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
     protected ProgressBar mProgressBar;
     protected SeekBar mSeekBar;
 
-    private ArrayList<String> mVideoPathList;
-    private int currentIndex = -1;
+    private ScheduledExecutorService mService; //线程池
+    private ArrayList<String> mVideoPathList; //视频列表
+    private int currentIndex = -1; //当前播放视频的索引
     private boolean isLongTime = false; //是否是长时间
     private boolean isFullScreen = false; //是否全屏
     private int position; //视频播放位置
@@ -82,7 +91,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
                 message.arg1 = mVideoView.getCurrentPosition();
                 mVideoPlayHandler.sendMessage(message);
             }
-            mVideoPlayHandler.postDelayed(this, UPDATE_MILLIS);
+            mVideoPlayHandler.postDelayed(this, UPDATE_DELAY);
         }
     };
     private Runnable hideOperationTask = new Runnable() {
@@ -179,6 +188,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
     /**
      * 设置监听器
      */
+    @SuppressLint("ClickableViewAccessibility")
     private void setOnListener() {
         mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
@@ -190,7 +200,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         mVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
-                finish();
+                next();
             }
         });
 
@@ -219,7 +229,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
                     mVideoView.start();
                     mVideoPlayHandler.post(updateProgressTask);
                 }
-                mVideoPlayHandler.postDelayed(hideOperationTask, 3000);
+                mVideoPlayHandler.postDelayed(hideOperationTask, HIDE_DELAY);
             }
         });
 
@@ -228,22 +238,71 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         mPlayView.setOnClickListener(this);
         mPreviousView.setOnClickListener(this);
         mNextView.setOnClickListener(this);
-        mRewindView.setOnClickListener(this);
-        mForwardView.setOnClickListener(this);
 
-        mRewindView.setOnLongClickListener(new View.OnLongClickListener() {
+        mRewindView.setOnTouchListener(new View.OnTouchListener() {
+
             @Override
-            public boolean onLongClick(View v) {
-                Log.e(TAG, "onLongClick: mRewindView");
-                return false;
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        if (mService == null || mService.isShutdown()) {
+                            if (mVideoView.isPlaying()) {
+                                mVideoView.pause();
+                            }
+                            mVideoPlayHandler.removeCallbacks(updateProgressTask);
+                            mVideoPlayHandler.removeCallbacks(hideOperationTask);
+
+                            mService = Executors.newSingleThreadScheduledExecutor();
+                            mService.scheduleWithFixedDelay(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.e(TAG, "run() called");
+                                    rewindOrForward(FLAG_REWIND);
+                                }
+                            }, 0, REWIND_FORWARD_DELAY, TimeUnit.MILLISECONDS);
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        mService.shutdown();
+                        mVideoView.start();
+                        mVideoPlayHandler.post(updateProgressTask);
+                        mVideoPlayHandler.postDelayed(hideOperationTask, HIDE_DELAY);
+                        break;
+                }
+                return true;
             }
         });
 
-        mForwardView.setOnLongClickListener(new View.OnLongClickListener() {
+        mForwardView.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public boolean onLongClick(View v) {
-                Log.e(TAG, "onLongClick: mForwardView");
-                return false;
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        if (mService == null || mService.isShutdown()) {
+                            if (mVideoView.isPlaying()) {
+                                mVideoView.pause();
+                            }
+                            mVideoPlayHandler.removeCallbacks(updateProgressTask);
+                            mVideoPlayHandler.removeCallbacks(hideOperationTask);
+
+                            mService = Executors.newSingleThreadScheduledExecutor();
+                            mService.scheduleWithFixedDelay(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.e(TAG, "run() called");
+                                    rewindOrForward(FLAG_FORWARD);
+                                }
+                            }, 0, REWIND_FORWARD_DELAY, TimeUnit.MILLISECONDS);
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        mService.shutdown();
+                        mVideoView.start();
+                        mVideoPlayHandler.post(updateProgressTask);
+                        mVideoPlayHandler.postDelayed(hideOperationTask, HIDE_DELAY);
+                        break;
+                }
+                return true;
             }
         });
     }
@@ -258,57 +317,58 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
                 changeOrientation();
                 break;
             case R.id.iv_video_previous:
-                if (currentIndex > 0) {
-                    currentIndex--;
-                } else {
-                    currentIndex = mVideoPathList.size() - 1;
-                }
-                createVideo(mVideoPathList.get(currentIndex));
+                previous();
                 break;
-            case R.id.iv_video_rewind:
-                rewindOrForward(FLAG_REWIND);
+            case R.id.id_video_next:
+                next();
                 break;
             case R.id.iv_video_play:
                 togglePlay();
                 break;
-            case R.id.ic_video_forward:
-                rewindOrForward(FLAG_FORWARD);
-                break;
-            case R.id.id_video_next:
-                if (currentIndex < mVideoPathList.size() - 1) {
-                    currentIndex++;
-                } else {
-                    currentIndex = 0;
-                }
-                createVideo(mVideoPathList.get(currentIndex));
-                break;
         }
+    }
+
+    /**
+     * 下一部
+     */
+    private void next() {
+        if (currentIndex < mVideoPathList.size() - 1) {
+            currentIndex++;
+        } else {
+            currentIndex = 0;
+        }
+        createVideo(mVideoPathList.get(currentIndex));
+    }
+
+    /**
+     * 上一部
+     */
+    private void previous() {
+        if (currentIndex > 0) {
+            currentIndex--;
+        } else {
+            currentIndex = mVideoPathList.size() - 1;
+        }
+        createVideo(mVideoPathList.get(currentIndex));
     }
 
     /**
      * 快退/快进
      */
     private void rewindOrForward(int flag) {
-        if (mVideoView.isPlaying()) {
-            mVideoView.pause();
-        }
-        mVideoPlayHandler.removeCallbacks(updateProgressTask);
-        mVideoPlayHandler.removeCallbacks(hideOperationTask);
         int progress = 0;
         switch (flag) {
             case FLAG_REWIND:
-                progress = mVideoView.getCurrentPosition() - 5000;
+                progress = mVideoView.getCurrentPosition() - REWIND_FORWARD_PROGRESS;
                 break;
             case FLAG_FORWARD:
-                progress = mVideoView.getCurrentPosition() + 5000;
+                progress = mVideoView.getCurrentPosition() + REWIND_FORWARD_PROGRESS;
                 break;
         }
 
         mVideoView.seekTo(progress);
+        mSeekBar.setProgress(progress);
         mCurrentPositionView.setText(TimeUtil.mills2timescale(progress, isLongTime));
-        mVideoView.start();
-        mVideoPlayHandler.post(updateProgressTask);
-        mVideoPlayHandler.postDelayed(hideOperationTask, 3000);
     }
 
     /**
@@ -520,11 +580,11 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
      * @param duration
      */
     private void prepareVideo(int duration) {
-        isLongTime = duration > 3599999; //(59m 59s 999ms)
+        isLongTime = duration > LONG_TIME_MAX;
         mSeekBar.setMax(duration);
         mTotalPositionView.setText(TimeUtil.mills2timescale(duration, isLongTime));
         mVideoPlayHandler.post(updateProgressTask);
-        mVideoPlayHandler.postDelayed(hideOperationTask, 3000);
+        mVideoPlayHandler.postDelayed(hideOperationTask, HIDE_DELAY);
     }
 
     /**
@@ -632,7 +692,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
                 mTopLayout.setVisibility(View.VISIBLE);
                 mBottomLayout.setVisibility(View.VISIBLE);
                 mVideoPlayHandler.post(updateProgressTask);
-                mVideoPlayHandler.postDelayed(hideOperationTask, 3000);
+                mVideoPlayHandler.postDelayed(hideOperationTask, HIDE_DELAY);
             }
             return true;
         }

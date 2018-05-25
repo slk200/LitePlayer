@@ -32,6 +32,7 @@ public class MusicPlayService extends Service {
     public static final int MSG_STATE = 0x109;
 
     private static final String TAG = "MusicPlayService"; //日志
+    private static final int UPDATE_DELAY = 500;
 
     /**
      * 服务传值
@@ -57,7 +58,7 @@ public class MusicPlayService extends Service {
                 message.arg1 = mMediaPlayer.getCurrentPosition();
                 sendMessageToActivity(message);
             }
-            mMessageHandler.postDelayed(this, 500);
+            mMessageHandler.postDelayed(this, UPDATE_DELAY);
         }
     };
 
