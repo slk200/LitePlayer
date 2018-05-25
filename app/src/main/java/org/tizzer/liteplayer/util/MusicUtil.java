@@ -15,6 +15,7 @@ public class MusicUtil {
 
     private static final String EXTERNAL_ALBUM_URI = "content://media/external/audio/albums";
     private static final String ALBUM_ART = "album_art";
+    private static final String[] SUFFIXS = {".mp3", ".aac"};
 
     public static List<MusicInfo> getMusicData(ContentResolver contentResolver) {
         List<MusicInfo> musicInfos = new ArrayList<>();
@@ -35,24 +36,33 @@ public class MusicUtil {
             while (cursor.moveToNext()) {
                 String filePath = cursor.getString(5);
                 if (new File(filePath).exists()) {
-                    musicInfo = new MusicInfo();
-                    musicInfo.setId(cursor.getInt(0));
-                    musicInfo.setTitle(cursor.getString(1));
-                    musicInfo.setArtist(cursor.getString(2));
-                    musicInfo.setAlbum(cursor.getString(3));
-                    musicInfo.setDuration(TimeUtil.mills2timescale(cursor.getInt(4), false));
-                    musicInfo.setPath(filePath);
-
-                    int albumId = cursor.getInt(6);
-                    Cursor albumArtCursor = contentResolver.query(Uri.parse(EXTERNAL_ALBUM_URI + "/" + albumId),
-                            albumArtProjection, null, null, null);
-                    if (albumArtCursor != null) {
-                        if (albumArtCursor.moveToNext()) {
-                            musicInfo.setAlbumArt(albumArtCursor.getString(0));
+                    boolean isAccord = false;
+                    for (String suffix : SUFFIXS) {
+                        if (filePath.toLowerCase().endsWith(suffix)) {
+                            isAccord = true;
+                            break;
                         }
-                        albumArtCursor.close();
                     }
-                    musicInfos.add(musicInfo);
+                    if (isAccord) {
+                        musicInfo = new MusicInfo();
+                        musicInfo.setId(cursor.getInt(0));
+                        musicInfo.setTitle(cursor.getString(1));
+                        musicInfo.setArtist(cursor.getString(2));
+                        musicInfo.setAlbum(cursor.getString(3));
+                        musicInfo.setDuration(TimeUtil.mills2timescale(cursor.getInt(4), false));
+                        musicInfo.setPath(filePath);
+
+                        int albumId = cursor.getInt(6);
+                        Cursor albumArtCursor = contentResolver.query(Uri.parse(EXTERNAL_ALBUM_URI + "/" + albumId),
+                                albumArtProjection, null, null, null);
+                        if (albumArtCursor != null) {
+                            if (albumArtCursor.moveToNext()) {
+                                musicInfo.setAlbumArt(albumArtCursor.getString(0));
+                            }
+                            albumArtCursor.close();
+                        }
+                        musicInfos.add(musicInfo);
+                    }
                 }
             }
             cursor.close();
