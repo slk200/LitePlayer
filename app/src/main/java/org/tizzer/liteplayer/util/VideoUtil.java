@@ -12,7 +12,7 @@ import java.util.List;
 
 public class VideoUtil {
 
-    private static final String[] SUFFIXS = {".mp4", ".3gp"};
+    private static final String SUFFIX_REGEX = "(\\s|\\S)+(.mp4|.3gp)";
 
     public static List<VideoInfo> getVideoData(ContentResolver contentResolver) {
         List<VideoInfo> videoInfos = new ArrayList<>();
@@ -30,33 +30,24 @@ public class VideoUtil {
             VideoInfo videoInfo;
             while (cursor.moveToNext()) {
                 String filePath = cursor.getString(3);
-                if (new File(filePath).exists()) {
-                    boolean isAccord = false;
-                    for (String suffix : SUFFIXS) {
-                        if (filePath.toLowerCase().endsWith(suffix)) {
-                            isAccord = true;
-                            break;
-                        }
-                    }
-                    if (isAccord) {
-                        videoInfo = new VideoInfo();
-                        videoInfo.setId(cursor.getInt(0));
-                        videoInfo.setTitle(cursor.getString(1));
-                        videoInfo.setResolution(cursor.getString(2));
-                        videoInfo.setPath(filePath);
-                        videoInfo.setDuration(TimeUtil.mills2timescale(cursor.getInt(4), false));
+                if (new File(filePath).exists() && filePath.matches(SUFFIX_REGEX)) {
+                    videoInfo = new VideoInfo();
+                    videoInfo.setId(cursor.getInt(0));
+                    videoInfo.setTitle(cursor.getString(1));
+                    videoInfo.setResolution(cursor.getString(2));
+                    videoInfo.setPath(filePath);
+                    videoInfo.setDuration(TimeUtil.mills2timescale(cursor.getInt(4), false));
 
-                        String thumbSelection = MediaStore.Video.Thumbnails.VIDEO_ID + "=" + videoInfo.getId();
-                        Cursor thumbCursor = contentResolver.query(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI,
-                                thumbProjection, thumbSelection, null, null);
-                        if (thumbCursor != null) {
-                            if (thumbCursor.moveToNext()) {
-                                videoInfo.setThumb(thumbCursor.getString(0));
-                            }
-                            thumbCursor.close();
+                    String thumbSelection = MediaStore.Video.Thumbnails.VIDEO_ID + "=" + videoInfo.getId();
+                    Cursor thumbCursor = contentResolver.query(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI,
+                            thumbProjection, thumbSelection, null, null);
+                    if (thumbCursor != null) {
+                        if (thumbCursor.moveToNext()) {
+                            videoInfo.setThumb(thumbCursor.getString(0));
                         }
-                        videoInfos.add(videoInfo);
+                        thumbCursor.close();
                     }
+                    videoInfos.add(videoInfo);
                 }
             }
             cursor.close();

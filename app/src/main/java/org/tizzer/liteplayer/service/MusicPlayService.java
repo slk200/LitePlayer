@@ -29,7 +29,7 @@ public class MusicPlayService extends Service {
     public static final int MSG_SWITCH = 0x1006;
     public static final int MSG_STOP = 0x1007;
     public static final int MSG_REMOVE = 0x1008;
-    public static final int MSG_STATE = 0x109;
+    public static final int MSG_STATE = 0x1009;
 
     private static final String TAG = "MusicPlayService"; //日志
     private static final int UPDATE_DELAY = 500;

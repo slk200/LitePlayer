@@ -45,8 +45,8 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
     private static final int MSG_UPDATE = 0x2001; //更新消息标识
     private static final int CRITICAL_VALUE = 100; //手势操作临界值
     private static final int UPDATE_DELAY = 500; //更新状态的间隔
-    public static final int REWIND_FORWARD_PROGRESS = 5000; //快退进跨度
-    public static final int LONG_TIME_MAX = 3599999; //(59m 59s 999ms)
+    private static final int REWIND_FORWARD_PROGRESS = 5000; //快退进跨度
+    private static final int LONG_TIME_MAX = 3599999; //(59m 59s 999ms)
     private static final int REWIND_FORWARD_DELAY = 200; //快退进延迟
     private static final int HIDE_DELAY = 3000; //隐藏间隔
     private static final int FLAG_REWIND = 0; //快退操作
