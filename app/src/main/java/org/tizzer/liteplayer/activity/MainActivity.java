@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -74,14 +75,12 @@ public class MainActivity extends AppCompatActivity
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case REQUEST_CODE:
-                for (int result : grantResults) {
-                    if (result != PackageManager.PERMISSION_GRANTED) {
-                        Toast.makeText(this, R.string.permission_message, Toast.LENGTH_SHORT).show();
-                        finish();
-                        break;
-                    }
-                    initView();
+                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, R.string.permission_message, Toast.LENGTH_SHORT).show();
+                    finish();
+                    break;
                 }
+                initView();
         }
     }
 
@@ -153,10 +152,12 @@ public class MainActivity extends AppCompatActivity
                     loadMusic(item);
                     break;
                 }
+
                 if (mMusicFragment.isHidden()) {
                     transToMusic(item);
                     break;
                 }
+
                 transToVideo(item);
         }
         return true;
@@ -191,8 +192,9 @@ public class MainActivity extends AppCompatActivity
         item.setTitle(R.string.video);
         mMusicFragment = new MusicFragment();
         mFragmentManager.beginTransaction()
-                .add(R.id.fl_container, mMusicFragment)
                 .hide(mVideoFragment)
+                .add(R.id.fl_container, mMusicFragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                 .commit();
     }
 
@@ -208,6 +210,7 @@ public class MainActivity extends AppCompatActivity
         mFragmentManager.beginTransaction()
                 .hide(mVideoFragment)
                 .show(mMusicFragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                 .commit();
     }
 
@@ -223,6 +226,7 @@ public class MainActivity extends AppCompatActivity
         mFragmentManager.beginTransaction()
                 .show(mVideoFragment)
                 .hide(mMusicFragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                 .commit();
     }
 }

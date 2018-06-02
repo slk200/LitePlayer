@@ -162,7 +162,7 @@ public class VideoFragment extends Fragment {
             ScanHelper.scanMediaFile(getContext().getContentResolver(), FileType.VIDEO, new ScanHelper.OnScanListener() {
                 @Override
                 public void onStop(List list) {
-                    Log.e(TAG, "scanMusic: " + list);
+                    Log.e(TAG, "scanVideo: " + list);
                     if (!mVideoInfos.isEmpty()) {
                         mVideoInfos.clear();
                     }
