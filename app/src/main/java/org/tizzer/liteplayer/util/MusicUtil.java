@@ -15,7 +15,7 @@ public class MusicUtil {
 
     private static final String EXTERNAL_ALBUM_URI = "content://media/external/audio/albums";
     private static final String ALBUM_ART = "album_art";
-    private static final String SUFFIX_REGEX = "(\\s|\\S)+(.mp4|.3gp)";
+    private static final String SUFFIX_REGEX = "(\\s|\\S)+(.mp3|.aac)";
 
     public static List<MusicInfo> getMusicData(ContentResolver contentResolver) {
         List<MusicInfo> musicInfos = new ArrayList<>();

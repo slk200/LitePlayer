@@ -4,172 +4,166 @@
     android:layout_height="wrap_content"
     android:padding="10dp">
 
-    <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <TextView
+        android:text="@string/file"
+        android:textColor="@color/colorAccent"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TableRow
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp">
 
         <TextView
-            android:text="@string/file"
-            android:textColor="@color/colorAccent"
-            android:textSize="20sp"
+            android:layout_marginEnd="10dp"
+            android:text="@string/filename"
+            android:textColor="@color/colorBlack"
             android:textStyle="bold" />
-
-        <TableRow
-            android:paddingEnd="10dp"
-            android:paddingStart="10dp"
-            android:paddingTop="10dp">
-
-            <TextView
-                android:layout_marginEnd="10dp"
-                android:text="@string/filename"
-                android:textColor="@color/colorBlack"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_filename"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="test" />
-
-        </TableRow>
-
-        <TableRow
-            android:paddingEnd="10dp"
-            android:paddingStart="10dp"
-            android:paddingTop="10dp">
-
-            <TextView
-                android:layout_marginEnd="10dp"
-                android:text="@string/path"
-                android:textColor="@color/colorBlack"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_path"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="test" />
-
-        </TableRow>
-
-        <TableRow
-            android:paddingEnd="10dp"
-            android:paddingStart="10dp"
-            android:paddingTop="10dp">
-
-            <TextView
-                android:layout_marginEnd="10dp"
-                android:text="@string/size"
-                android:textColor="@color/colorBlack"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_size"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="test" />
-
-        </TableRow>
-
-
-        <TableRow android:padding="10dp">
-
-            <TextView
-                android:layout_marginEnd="10dp"
-                android:text="@string/time"
-                android:textColor="@color/colorBlack"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_time"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="test" />
-
-        </TableRow>
 
         <TextView
-            android:text="@string/media"
-            android:textColor="@color/colorAccent"
-            android:textSize="20sp"
+            android:id="@+id/tv_filename"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="test" />
+
+    </TableRow>
+
+    <TableRow
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp">
+
+        <TextView
+            android:layout_marginEnd="10dp"
+            android:text="@string/path"
+            android:textColor="@color/colorBlack"
             android:textStyle="bold" />
 
-        <TableRow
-            android:paddingEnd="10dp"
-            android:paddingStart="10dp"
-            android:paddingTop="10dp">
+        <TextView
+            android:id="@+id/tv_path"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="test" />
 
-            <TextView
-                android:layout_marginEnd="10dp"
-                android:text="@string/title"
-                android:textColor="@color/colorBlack"
-                android:textStyle="bold" />
+    </TableRow>
 
-            <TextView
-                android:id="@+id/tv_title"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="test" />
+    <TableRow
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp">
 
-        </TableRow>
+        <TextView
+            android:layout_marginEnd="10dp"
+            android:text="@string/size"
+            android:textColor="@color/colorBlack"
+            android:textStyle="bold" />
 
-        <TableRow
-            android:paddingEnd="10dp"
-            android:paddingStart="10dp"
-            android:paddingTop="10dp">
+        <TextView
+            android:id="@+id/tv_size"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="test" />
 
-            <TextView
-                android:layout_marginEnd="10dp"
-                android:text="@string/artist"
-                android:textColor="@color/colorBlack"
-                android:textStyle="bold" />
+    </TableRow>
 
-            <TextView
-                android:id="@+id/tv_artist"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="test" />
 
-        </TableRow>
+    <TableRow android:padding="10dp">
 
-        <TableRow
-            android:paddingEnd="10dp"
-            android:paddingStart="10dp"
-            android:paddingTop="10dp">
+        <TextView
+            android:layout_marginEnd="10dp"
+            android:text="@string/time"
+            android:textColor="@color/colorBlack"
+            android:textStyle="bold" />
 
-            <TextView
-                android:layout_marginEnd="10dp"
-                android:text="@string/album"
-                android:textColor="@color/colorBlack"
-                android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tv_time"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="test" />
 
-            <TextView
-                android:id="@+id/tv_album"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="test" />
+    </TableRow>
 
-        </TableRow>
+    <TextView
+        android:text="@string/media"
+        android:textColor="@color/colorAccent"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
-        <TableRow
-            android:paddingEnd="10dp"
-            android:paddingStart="10dp"
-            android:paddingTop="10dp">
+    <TableRow
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp">
 
-            <TextView
-                android:layout_marginEnd="10dp"
-                android:text="@string/duration"
-                android:textColor="@color/colorBlack"
-                android:textStyle="bold" />
+        <TextView
+            android:layout_marginEnd="10dp"
+            android:text="@string/title"
+            android:textColor="@color/colorBlack"
+            android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tv_duration"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="test" />
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="test" />
 
-        </TableRow>
+    </TableRow>
 
-    </TableLayout>
+    <TableRow
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp">
+
+        <TextView
+            android:layout_marginEnd="10dp"
+            android:text="@string/artist"
+            android:textColor="@color/colorBlack"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_artist"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="test" />
+
+    </TableRow>
+
+    <TableRow
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp">
+
+        <TextView
+            android:layout_marginEnd="10dp"
+            android:text="@string/album"
+            android:textColor="@color/colorBlack"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_album"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="test" />
+
+    </TableRow>
+
+    <TableRow
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp">
+
+        <TextView
+            android:layout_marginEnd="10dp"
+            android:text="@string/duration"
+            android:textColor="@color/colorBlack"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_duration"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="test" />
+
+    </TableRow>
 
 </TableLayout>

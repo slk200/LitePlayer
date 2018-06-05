@@ -24,6 +24,7 @@ import java.io.File;
 
 public class VideoInfoDialogFragment extends DialogFragment implements DialogInterface.OnClickListener {
     public static final String VIDEO_INFO = "video_info"; //bundle视频对象标志
+    public static final String VIDEO_POSITION = "video_position"; //bundle视频位置标志
 
     private static final String TAG = "VideoInfoDialogFragment"; //日志
 
@@ -37,10 +38,11 @@ public class VideoInfoDialogFragment extends DialogFragment implements DialogInt
      * @param videoInfo
      * @return
      */
-    public static VideoInfoDialogFragment instance(VideoInfo videoInfo) {
+    public static VideoInfoDialogFragment instance(VideoInfo videoInfo, int position) {
         VideoInfoDialogFragment videoInfoDialogFragment = new VideoInfoDialogFragment();
         Bundle bundle = new Bundle();
         bundle.putSerializable(VIDEO_INFO, videoInfo);
+        bundle.putInt(VIDEO_POSITION, position);
         videoInfoDialogFragment.setArguments(bundle);
         return videoInfoDialogFragment;
     }
@@ -113,7 +115,7 @@ public class VideoInfoDialogFragment extends DialogFragment implements DialogInt
                     file.delete();
                 }
                 Toast.makeText(getContext(), R.string.delete_success, Toast.LENGTH_SHORT).show();
-                deleteListener.onVideoDelete(mVideoInfo);
+                deleteListener.onVideoDelete(getArguments().getInt(VIDEO_POSITION));
                 break;
             case DialogInterface.BUTTON_POSITIVE:
                 dismiss();

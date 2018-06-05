@@ -15,13 +15,13 @@ import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -30,7 +30,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import org.tizzer.liteplayer.R;
-import org.tizzer.liteplayer.adapter.MusicListAdapter;
+import org.tizzer.liteplayer.adapter.MusicRecyclerViewAdapter;
 import org.tizzer.liteplayer.constants.FileType;
 import org.tizzer.liteplayer.constants.ResultCode;
 import org.tizzer.liteplayer.entity.MusicInfo;
@@ -43,19 +43,19 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MusicFragment extends Fragment implements View.OnClickListener {
+public class MusicFragment extends Fragment implements View.OnClickListener, MusicRecyclerViewAdapter.OnClickListener {
     private static final String TAG = "MusicFragment"; //日志
 
     /**
      * 控件
      */
     protected SwipeRefreshLayout mRefreshView;
-    protected ListView mMusicList;
+    protected RecyclerView mMusicList;
     protected RelativeLayout mPlayBar;
     protected SeekBar mSeekBar;
     protected TextView mTitleView, mArtistAlbumView;
     protected ImageView mAlbumView, mPlayView, mNextView, mPreviousView;
-    private MusicListAdapter mMusicListAdapter; //适配器
+    private MusicRecyclerViewAdapter mMusicListAdapter; //适配器
     private List<MusicInfo> mMusicInfos = new ArrayList<>();
 
     private int currentPosition = -1; //当前播放位置
@@ -116,7 +116,8 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
         mPreviousView = view.findViewById(R.id.iv_previous);
 
         //适配视频列表
-        mMusicListAdapter = new MusicListAdapter(getContext(), mMusicInfos);
+        mMusicList.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+        mMusicListAdapter = new MusicRecyclerViewAdapter(getActivity().getApplicationContext(), mMusicInfos, this);
         mMusicList.setAdapter(mMusicListAdapter);
     }
 
@@ -128,35 +129,6 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onRefresh() {
                 scanMusic();
-            }
-        });
-
-        mMusicList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (currentId != id) {
-                    MusicInfo musicInfo = (MusicInfo) mMusicListAdapter.getItem(position);
-                    if (new File(musicInfo.getPath()).exists()) {
-                        currentId = id;
-                        currentPosition = position;
-                        start(musicInfo);
-                    } else {
-                        deleteMusic(musicInfo);
-                        Toast.makeText(getContext(), R.string.music_lose, Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    pause();
-                }
-            }
-        });
-
-        mMusicList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                longClickPosition = position;
-                MusicInfo musicInfo = (MusicInfo) mMusicListAdapter.getItem(position);
-                MusicInfoDialogFragment.instance(musicInfo).show(getFragmentManager(), MusicInfoDialogFragment.MUSIC_INFO);
-                return true;
             }
         });
 
@@ -204,15 +176,38 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    @Override
+    public void onItemClick(int position, MusicInfo musicInfo) {
+        if (currentId != musicInfo.getId()) {
+            if (new File(musicInfo.getPath()).exists()) {
+                currentId = musicInfo.getId();
+                currentPosition = position;
+                start(musicInfo);
+            } else {
+                deleteMusic(musicInfo, position);
+                Toast.makeText(getContext(), R.string.music_lose, Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            pause();
+        }
+    }
+
+    @Override
+    public void onItemLongClick(int position, MusicInfo musicInfo) {
+        longClickPosition = position;
+        MusicInfoDialogFragment.instance(musicInfo, position).show(getFragmentManager(), MusicInfoDialogFragment.MUSIC_INFO);
+    }
+
     /**
      * 删除列表中的音乐
      *
      * @param musicInfo
      */
-    public boolean deleteMusic(MusicInfo musicInfo) {
+    public boolean deleteMusic(MusicInfo musicInfo, int position) {
         Log.e(TAG, "deleteMusic: " + musicInfo.getId() + "  ?  " + currentId);
         if (musicInfo.getId() != currentId) {
-            mMusicListAdapter.removeItem(musicInfo);
+            mMusicInfos.remove(position);
+            mMusicListAdapter.notifyItemRemoved(position);
             if (longClickPosition < currentPosition) {
                 currentPosition--;
             }
@@ -315,7 +310,7 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
      * 下一首
      */
     private void next() {
-        if (currentPosition < mMusicListAdapter.getCount() - 1) {
+        if (currentPosition < mMusicListAdapter.getItemCount() - 1) {
             currentPosition++;
         } else {
             currentPosition = 0;
@@ -330,7 +325,7 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
         if ((currentPosition > 0)) {
             currentPosition--;
         } else {
-            currentPosition = mMusicListAdapter.getCount() - 1;
+            currentPosition = mMusicListAdapter.getItemCount() - 1;
         }
         switchSource();
     }
@@ -339,7 +334,7 @@ public class MusicFragment extends Fragment implements View.OnClickListener {
      * 切歌
      */
     private void switchSource() {
-        MusicInfo musicInfo = (MusicInfo) mMusicListAdapter.getItem(currentPosition);
+        MusicInfo musicInfo = mMusicInfos.get(currentPosition);
         Message message = Message.obtain();
         message.what = MusicPlayService.MSG_SWITCH;
         message.obj = musicInfo;

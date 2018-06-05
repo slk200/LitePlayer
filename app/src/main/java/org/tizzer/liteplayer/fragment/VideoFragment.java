@@ -9,17 +9,17 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import org.tizzer.liteplayer.R;
 import org.tizzer.liteplayer.activity.VideoPlayActivity;
-import org.tizzer.liteplayer.adapter.VideoListAdapter;
+import org.tizzer.liteplayer.adapter.VideoRecyclerViewAdapter;
 import org.tizzer.liteplayer.constants.FileType;
 import org.tizzer.liteplayer.entity.VideoInfo;
 import org.tizzer.liteplayer.helper.ScanHelper;
@@ -29,7 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VideoFragment extends Fragment {
+public class VideoFragment extends Fragment implements VideoRecyclerViewAdapter.OnClickListener {
     public static final String VIDEO_LIST = "video_list"; //intent视频路径标记
     public static final String CURRENT_POSITION = "current_position";
     private static final String TAG = "VideoFragment"; //日志
@@ -38,9 +38,9 @@ public class VideoFragment extends Fragment {
      * 控件
      */
     protected SwipeRefreshLayout mRefreshView;
-    protected ListView mVideoList;
+    protected RecyclerView mVideoList;
     protected FloatingActionButton mExitButton;
-    private VideoListAdapter mVideoListAdapter; //适配器
+    private VideoRecyclerViewAdapter mVideoListAdapter; //适配器
 
     private OnMusicPauseListener pauseListener; //暂停音乐播放回调
 
@@ -68,7 +68,8 @@ public class VideoFragment extends Fragment {
         mExitButton = view.findViewById(R.id.fab_exit);
 
         //适配视频列表
-        mVideoListAdapter = new VideoListAdapter(getContext(), mVideoInfos);
+        mVideoList.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+        mVideoListAdapter = new VideoRecyclerViewAdapter(getActivity().getApplicationContext(), mVideoInfos, this);
         mVideoList.setAdapter(mVideoListAdapter);
     }
 
@@ -83,43 +84,36 @@ public class VideoFragment extends Fragment {
             }
         });
 
-        mVideoList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                VideoInfo currentVideoInfo = (VideoInfo) mVideoListAdapter.getItem(position);
-                if (new File(currentVideoInfo.getPath()).exists()) {
-                    Intent intent = new Intent();
-                    intent.setClass(getContext(), VideoPlayActivity.class);
-                    ArrayList<String> videoPathList = new ArrayList<>();
-                    for (VideoInfo videoInfo : mVideoInfos) {
-                        videoPathList.add(videoInfo.getPath());
-                    }
-                    intent.putStringArrayListExtra(VIDEO_LIST, videoPathList);
-                    intent.putExtra(CURRENT_POSITION, position);
-                    getActivity().startActivity(intent);
-                    pauseListener.onMusicPause();
-                } else {
-                    deleteVideo(currentVideoInfo);
-                    Toast.makeText(getContext(), R.string.video_lose, Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        mVideoList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                VideoInfo videoInfo = (VideoInfo) mVideoListAdapter.getItem(position);
-                VideoInfoDialogFragment.instance(videoInfo).show(getFragmentManager(), VideoInfoDialogFragment.VIDEO_INFO);
-                return true;
-            }
-        });
-
         mExitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 getActivity().finish();
             }
         });
+    }
+
+    @Override
+    public void onItemClick(int position, VideoInfo videoInfo) {
+        if (new File(videoInfo.getPath()).exists()) {
+            Intent intent = new Intent();
+            intent.setClass(getContext(), VideoPlayActivity.class);
+            ArrayList<String> videoPathList = new ArrayList<>();
+            for (VideoInfo info : mVideoInfos) {
+                videoPathList.add(info.getPath());
+            }
+            intent.putStringArrayListExtra(VIDEO_LIST, videoPathList);
+            intent.putExtra(CURRENT_POSITION, position);
+            getActivity().startActivity(intent);
+            pauseListener.onMusicPause();
+        } else {
+            deleteVideo(position);
+            Toast.makeText(getContext(), R.string.video_lose, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void OnItemLongClick(int position, VideoInfo videoInfo) {
+        VideoInfoDialogFragment.instance(videoInfo, position).show(getFragmentManager(), VideoInfoDialogFragment.VIDEO_INFO);
     }
 
     /**
@@ -147,11 +141,10 @@ public class VideoFragment extends Fragment {
 
     /**
      * 删除列表中的视频
-     *
-     * @param videoInfo
      */
-    public void deleteVideo(VideoInfo videoInfo) {
-        mVideoListAdapter.removeItem(videoInfo);
+    public void deleteVideo(int position) {
+        mVideoInfos.remove(position);
+        mVideoListAdapter.notifyItemRemoved(position);
     }
 
     /**

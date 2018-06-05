@@ -98,21 +98,21 @@ public class MainActivity extends AppCompatActivity
     /**
      * 删除视频回调
      *
-     * @param videoInfo
      */
     @Override
-    public void onVideoDelete(VideoInfo videoInfo) {
-        mVideoFragment.deleteVideo(videoInfo);
+    public void onVideoDelete(int position) {
+        mVideoFragment.deleteVideo(position);
     }
 
     /**
      * 删除音乐回调
      *
      * @param musicInfo
+     * @param position
      */
     @Override
-    public boolean onMusicDelete(MusicInfo musicInfo) {
-        return mMusicFragment.deleteMusic(musicInfo);
+    public boolean onMusicDelete(MusicInfo musicInfo, int position) {
+        return mMusicFragment.deleteMusic(musicInfo, position);
     }
 
     /**

@@ -24,6 +24,7 @@ import java.io.File;
 
 public class MusicInfoDialogFragment extends DialogFragment implements DialogInterface.OnClickListener {
     public static final String MUSIC_INFO = "music_info"; //bundle音频对象标志
+    public static final String MUSIC_POSITION = "music_position"; //bundle音频位置标志
 
     private static final String TAG = "MusicInfoDialogFragment"; //日志
 
@@ -37,10 +38,11 @@ public class MusicInfoDialogFragment extends DialogFragment implements DialogInt
      * @param musicInfo
      * @return
      */
-    public static MusicInfoDialogFragment instance(MusicInfo musicInfo) {
+    public static MusicInfoDialogFragment instance(MusicInfo musicInfo, int position) {
         MusicInfoDialogFragment videoInfoDialogFragment = new MusicInfoDialogFragment();
         Bundle bundle = new Bundle();
         bundle.putSerializable(MUSIC_INFO, musicInfo);
+        bundle.putInt(MUSIC_POSITION, position);
         videoInfoDialogFragment.setArguments(bundle);
         return videoInfoDialogFragment;
     }
@@ -112,7 +114,7 @@ public class MusicInfoDialogFragment extends DialogFragment implements DialogInt
     public void onClick(DialogInterface dialog, int which) {
         switch (which) {
             case DialogInterface.BUTTON_NEUTRAL:
-                boolean result = deleteListener.onMusicDelete(mMusicInfo);
+                boolean result = deleteListener.onMusicDelete(mMusicInfo, getArguments().getInt(MUSIC_POSITION));
                 if (result) {
                     File file = new File(mMusicInfo.getPath());
                     if (file.exists()) {
