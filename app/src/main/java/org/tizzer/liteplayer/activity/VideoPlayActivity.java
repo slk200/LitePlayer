@@ -56,7 +56,6 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
     protected ProgressBar mProgressBar;
     protected SeekBar mSeekBar;
 
-    private ScheduledExecutorService mService; //线程池
     private ArrayList<String> mVideoPathList; //视频列表
     private int currentIndex = -1; //当前播放视频的索引
     private boolean isLongTime = false; //是否是长时间
