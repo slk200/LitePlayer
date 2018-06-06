@@ -1,6 +1,5 @@
 package org.tizzer.liteplayer.activity;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -36,9 +35,7 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class VideoPlayActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "VideoPlayActivity"; //日志
@@ -47,7 +44,6 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
     private static final int UPDATE_DELAY = 500; //更新状态的间隔
     private static final int REWIND_FORWARD_PROGRESS = 5000; //快退进跨度
     private static final int LONG_TIME_MAX = 3599999; //(59m 59s 999ms)
-    private static final int REWIND_FORWARD_DELAY = 200; //快退进延迟
     private static final int HIDE_DELAY = 3000; //隐藏间隔
     private static final int FLAG_REWIND = 0; //快退操作
     private static final int FLAG_FORWARD = 1; //快进操作
@@ -188,7 +184,6 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
     /**
      * 设置监听器
      */
-    @SuppressLint("ClickableViewAccessibility")
     private void setOnListener() {
         mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
@@ -238,73 +233,8 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         mPlayView.setOnClickListener(this);
         mPreviousView.setOnClickListener(this);
         mNextView.setOnClickListener(this);
-
-        mRewindView.setOnTouchListener(new View.OnTouchListener() {
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getActionMasked()) {
-                    case MotionEvent.ACTION_DOWN:
-                        if (mService == null || mService.isShutdown()) {
-                            if (mVideoView.isPlaying()) {
-                                mVideoView.pause();
-                            }
-                            mVideoPlayHandler.removeCallbacks(updateProgressTask);
-                            mVideoPlayHandler.removeCallbacks(hideOperationTask);
-
-                            mService = Executors.newSingleThreadScheduledExecutor();
-                            mService.scheduleWithFixedDelay(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.e(TAG, "run() called");
-                                    rewindOrForward(FLAG_REWIND);
-                                }
-                            }, 0, REWIND_FORWARD_DELAY, TimeUnit.MILLISECONDS);
-                        }
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        mService.shutdown();
-                        mVideoView.start();
-                        mVideoPlayHandler.post(updateProgressTask);
-                        mVideoPlayHandler.postDelayed(hideOperationTask, HIDE_DELAY);
-                        break;
-                }
-                return true;
-            }
-        });
-
-        mForwardView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getActionMasked()) {
-                    case MotionEvent.ACTION_DOWN:
-                        if (mService == null || mService.isShutdown()) {
-                            if (mVideoView.isPlaying()) {
-                                mVideoView.pause();
-                            }
-                            mVideoPlayHandler.removeCallbacks(updateProgressTask);
-                            mVideoPlayHandler.removeCallbacks(hideOperationTask);
-
-                            mService = Executors.newSingleThreadScheduledExecutor();
-                            mService.scheduleWithFixedDelay(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.e(TAG, "run() called");
-                                    rewindOrForward(FLAG_FORWARD);
-                                }
-                            }, 0, REWIND_FORWARD_DELAY, TimeUnit.MILLISECONDS);
-                        }
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        mService.shutdown();
-                        mVideoView.start();
-                        mVideoPlayHandler.post(updateProgressTask);
-                        mVideoPlayHandler.postDelayed(hideOperationTask, HIDE_DELAY);
-                        break;
-                }
-                return true;
-            }
-        });
+        mRewindView.setOnClickListener(this);
+        mForwardView.setOnClickListener(this);
     }
 
     @Override
@@ -319,8 +249,14 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
             case R.id.iv_video_previous:
                 previous();
                 break;
+            case R.id.iv_video_rewind:
+                rewindOrForward(FLAG_REWIND);
+                break;
             case R.id.id_video_next:
                 next();
+                break;
+            case R.id.ic_video_forward:
+                rewindOrForward(FLAG_FORWARD);
                 break;
             case R.id.iv_video_play:
                 togglePlay();
@@ -356,6 +292,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
      * 快退/快进
      */
     private void rewindOrForward(int flag) {
+        mVideoPlayHandler.removeCallbacks(hideOperationTask);
         int progress = 0;
         switch (flag) {
             case FLAG_REWIND:
@@ -369,6 +306,7 @@ public class VideoPlayActivity extends AppCompatActivity implements View.OnClick
         mVideoView.seekTo(progress);
         mSeekBar.setProgress(progress);
         mCurrentPositionView.setText(TimeUtil.mills2timescale(progress, isLongTime));
+        mVideoPlayHandler.postDelayed(hideOperationTask, HIDE_DELAY);
     }
 
     /**
