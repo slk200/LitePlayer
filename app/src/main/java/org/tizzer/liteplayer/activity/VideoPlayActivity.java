@@ -35,7 +35,6 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class VideoPlayActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "VideoPlayActivity"; //日志
